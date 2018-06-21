@@ -1,0 +1,121 @@
+<script>
+    (function () {
+        'use strict';
+
+        if (!(window.customElements && document.body.attachShadow)) {
+            document.querySelector('webc-autocomplete').innerHTML = "<b>Your browser doesn't support Shadow DOM and Custom Elements v1</b>";
+            return;
+        }
+
+        let timeout = null;
+        let selected_ = null;
+        let list = [
+            {
+                id: 1,
+                name: 'Alemania'
+            },
+            {
+                id: 2,
+                name: 'Rusia'
+            },
+            {
+                id: 3,
+                name: 'Andorra'
+            },
+            {
+                id: 4,
+                name: 'España'
+            },
+        ];
+
+        customElements.define('webc-autocomplete', class extends HTMLElement {
+            constructor() {
+                super();
+
+                let shadowRoot = this.attachShadow({mode: 'open'});
+                shadowRoot.innerHTML = `
+                <style>
+                    :host {
+                      display: inline-block;
+                      position: relative;
+                    }
+
+                    ul {
+                      list-style: none;
+                      padding: 0;
+                      width: 100%;
+                      border: solid 1px #d1d1d1;
+                      border-top: 0;
+                      margin: 0;
+                      position: absolute;
+                      /*display: none;*/
+                      -webkit-transition: all 2s ease; /* Safari */
+                      transition: all 2s ease;
+                    }
+
+                    ul.expanded {
+                      display: block;
+                    }
+
+                    ul li {
+                      display: block;
+                      padding: 5px 10px;
+                      cursor: pointer;
+                    }
+
+                    ul li:hover {
+                      background-color: #d1d1d1;
+                    }
+                </style>
+                <input id="filter" type="text">
+                <ul id="results"></ul>
+               `;
+            }
+
+            get selected() {
+                return selected_;
+            }
+
+            set selected(idx) {
+                selected_ = idx;
+                this._selectResult(idx);
+                this.setAttribute('selected', idx);
+                this.dispatchEvent(new Event('selected', {bubbles: true, composed: true}));
+            }
+
+            connectedCallback() {
+                const filter = this.shadowRoot.querySelector('#filter');
+                this._boundOnKeyDown = this._onKeyDown.bind(this);
+                filter.addEventListener('keydown', this._boundOnKeyDown);
+            }
+
+            disconnectedCallback() {
+                const filter = this.shadowRoot.querySelector('#filter');
+                filter.removeEventListener('keydown', this._boundOnKeyDown);
+            }
+
+            _onKeyDown(e) {
+                this._showResults(e.target.value);
+            }
+
+            _showResults(search) {
+                /*const result = this.shadowRoot.querySelector('#results');
+                result.innerHTML = '';
+
+                for(let key in list) {
+                    let value = list[key];
+                    if ((value.name).includes(search)) {
+                        let li = document.createElement('li');
+                        let text = document.createTextNode(value.name);
+                        li.appendChild(text);
+                        result.appendChild(li);
+                    }
+                }*/
+            }
+
+            _selectResult(idx) {
+
+            }
+        })
+    })();
+</script>

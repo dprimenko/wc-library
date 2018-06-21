@@ -1,0 +1,168 @@
+<script>
+    (function () {
+       'use strict';
+
+       if (!(window.customElements && document.body.attachShadow)) {
+           document.querySelector('webc-autocomplete').innerHTML = "<b>Your browser doesn't support Shadow DOM and Custom Elements v1</b>";
+           return;
+       }
+
+       let timeout = null;
+       let selected_ = null;
+
+       customElements.define('webc-autocomplete', class extends HTMLElement {
+           constructor() {
+               super();
+
+               let shadowRoot = this.attachShadow({mode: 'open'});
+               shadowRoot.innerHTML = `
+                <style>
+                    :host {
+                      display: inline-block;
+                      position: relative;
+                    }
+
+                    :host .icon-close {
+                        font-size: 12px;
+                        position: absolute;
+                        top: 45%;
+                        right: 5px;
+                        margin-top: -8px;
+                        cursor: pointer;
+                    }
+
+                    :host .icon-close:hover {
+                        opacity: 0.8;
+                    }
+
+                    ul {
+                      list-style: none;
+                      padding: 0;
+                      width: 100%;
+                      border: solid 1px #d1d1d1;
+                      border-top: 0;
+                      margin: 0;
+                      position: absolute;
+                      -webkit-transition: all 2s ease; /* Safari */
+                      transition: all 2s ease;
+                    }
+
+                    ul li {
+                      display: block;
+                      padding: 5px 10px;
+                      cursor: pointer;
+                    }
+
+                    ul li:hover {
+                      background-color: #d1d1d1;
+                    }
+                </style>
+                <input id="filter" type="text">
+                <span id="close" class="icon-close">🗙</span>
+                <ul id="results" hidden></ul>
+               `;
+           }
+
+           get selected() {
+               return selected_;
+           }
+
+           set selected(item) {
+               selected_ = item;
+               this._selectResult(item);
+               this.setAttribute('selected', JSON.stringify(item));
+               this.dispatchEvent(new Event('selected', {bubbles: true, composed: true}));
+           }
+
+           connectedCallback() {
+               const filter = this.shadowRoot.querySelector('#filter');
+               const close = this.shadowRoot.querySelector('#close');
+
+               this._boundOnKeyDown = this._onKeyDown.bind(this);
+               filter.addEventListener('keyup', this._boundOnKeyDown);
+
+               this._boundOnClick = this._onClose.bind(this);
+               close.addEventListener('click', this._boundOnClick);
+           }
+
+           disconnectedCallback() {
+               const filter = this.shadowRoot.querySelector('#filter');
+               const close = this.shadowRoot.querySelector('#close');
+
+               filter.removeEventListener('keyup', this._boundOnKeyDown);
+               close.removeEventListener('click', this._boundOnClick);
+           }
+
+           _onKeyDown(e) {
+               this._showResults(e.target.value);
+           }
+
+           _onClose(e) {
+               this._selectResult();
+           }
+
+           _showResults(search) {
+               let list = JSON.parse(this.getAttribute('list'));
+               const result = this.shadowRoot.getElementById('results');
+               let noResults = true;
+               this._clearResults();
+
+               if (search !== '') {
+                   for(let key in list) {
+                       let value = list[key];
+                       if ((value.name.toLowerCase()).includes(search.toLowerCase())) {
+                           let li = document.createElement('li');
+                           let text = document.createTextNode(value.name);
+                           li.appendChild(text);
+                           li.addEventListener('click', function (e) {
+                               this.selected = value;
+                           }.bind(this));
+                           result.appendChild(li);
+                           noResults = false;
+                       }
+                   }
+
+                   this._toggleResultsContainer(true);
+
+                   if (noResults) {
+                       result.innerHTML = `<li>No hay resultados.</li>`;
+                   }
+               } else {
+                   this._toggleResultsContainer(false);
+               }
+           }
+
+           _toggleResultsContainer(state) {
+               const result = this.shadowRoot.getElementById('results');
+               if (state) {
+                   result.removeAttribute('hidden');
+                   return;
+               }
+
+               result.setAttribute('hidden', true);
+           }
+
+           _toggleClose(state) {
+               const close = this.shadowRoot.getElementById('close');
+               if (state) {
+                   close.removeAttribute('hidden');
+                   return;
+               }
+
+               close.setAttribute('hidden', true);
+           }
+
+           _clearResults() {
+               const result = this.shadowRoot.getElementById('results');
+               this._toggleResultsContainer(false);
+               result.innerHTML = '';
+           }
+
+           _selectResult(item = null) {
+               const filter = this.shadowRoot.getElementById('filter');
+               filter.value = (item === null) ? '' : item.name;
+               this._clearResults();
+           }
+       })
+    })();
+</script>

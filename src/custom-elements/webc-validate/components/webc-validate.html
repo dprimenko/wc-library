@@ -1,0 +1,93 @@
+<script>
+    (function () {
+       'use strict';
+
+       if (!(window.customElements && document.body.attachShadow)) {
+           document.querySelector('webc-validate').innerHTML = "<b>Your browser doesn't support Shadow DOM and Custom Elements v1</b>";
+           return;
+       }
+
+       let valid_ = false;
+
+       customElements.define('webc-validate', class extends HTMLElement {
+           constructor() {
+               super();
+
+               let shadowRoot = this.attachShadow({mode: 'open'});
+               shadowRoot.innerHTML = `
+                <style>
+                    :host {
+                        position: relative;
+                        display: inline-block;
+                        height: 21px;
+                    }
+
+                    :host .icon {
+                        font-size: 12px;
+                        position: absolute;
+                        top: 50%;
+                        right: 5px;
+                        display: none;
+                        margin-top: -8px;
+                    }
+
+                    :host([success=true]) .icon-valid {
+                        display: block;
+                    }
+
+                    :host .icon-invalid {
+                        display: block;
+                    }
+
+                    :host([success=true]) .icon-invalid {
+                        display: none;
+                    }
+
+                    :host input {
+                        padding-right: 16px;
+                    }
+                </style>
+                <input id="validate-input" type="text"/>
+                <slot class="icon icon-valid" name="icon-valid"></slot>
+                <slot class="icon icon-invalid" name="icon-invalid"></slot>
+               `;
+           }
+
+           get validInput() {
+               return this.valid_;
+           }
+
+           set validInput(state) {
+               var changed = this.valid_ != state;
+               this.valid_ = state;
+               this.setAttribute('success', state);
+               if (changed) {
+                   this.dispatchEvent(new Event((this.valid_) ? 'valid' : 'invalid', {bubbles: true, composed: true}));
+               }
+           }
+
+           connectedCallback() {
+               this.setAttribute('role', 'input');
+               const validateInput = this.shadowRoot.querySelector('#validate-input');
+               this._boundOnKeyDown = this._onKeyDown.bind(this);
+               validateInput.addEventListener('keydown', this._boundOnKeyDown);
+           }
+
+           disconnectedCallback() {
+               const validateInput = this.shadowRoot.querySelector('#validate-input');
+               validateInput.removeEventListener('keydown', this._boundOnKeyDown);
+           }
+
+           validate(text) {
+               var match = this.getAttribute('match');
+               var flag = this.getAttribute('flag');
+               var re = (flag !== 'undefined') ? new RegExp(match,flag) : new RegExp(match);
+               return re.test(String(text).toLowerCase());
+           }
+
+           _onKeyDown(e) {
+               this.validInput = this.validate(e.target.value);
+           }
+       })
+    })();
+</script>

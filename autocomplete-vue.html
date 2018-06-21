@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Web Component</title>
+    <link rel="import" href="./src/custom-elements/webc-autocomplete/components/webc-autocomplete.html">
+</head>
+<body >
+<div id="app">
+    <webc-autocomplete :list='JSON.stringify(list)' @selected="onSelected" />
+</div>
+<script src="https://cdn.jsdelivr.net/npm/vue@2.5.16/dist/vue.js"></script>
+<script>
+    new Vue({
+        el: '#app',
+        data: {
+            list: [
+                {
+                    "id": 1,
+                    "name": "Alemania"
+                },
+                {
+                    "id": 2,
+                    "name": "España"
+                },
+                {
+                    "id": 3,
+                    "name": "Rusia"
+                },
+                {
+                    "id": 4,
+                    "name": "Belgica"
+                }
+            ]
+        },
+        methods: {
+            onSelected(e) {
+                console.log("Ha seleccionado:", JSON.parse(e.target.getAttribute('selected')).name);
+            }
+        }
+    });
+</script>
+</body>
+</html>
